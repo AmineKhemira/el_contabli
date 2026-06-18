@@ -10,13 +10,13 @@ logger = logging.getLogger(__name__)
 
 # German Revolut CSV columns:
 # Typ, Produkt, Startdatum, Datum des Abschlusses, Beschreibung, Betrag, Gebühr, Währung, Status, Guthaben
-_COMPLETED_STATUSES = {"COMPLETED", "Abgeschlossen"}
+_COMPLETED_STATUSES = {"COMPLETED", "ABGESCHLOSSEN"}
 _REQUIRED_COLUMNS = {"Status", "Datum des Abschlusses", "Beschreibung", "Betrag"}
 
 
 def _decode_csv(raw: bytes) -> str:
-    """Try UTF-8-BOM first (common Revolut export), then UTF-8, then latin-1."""
-    for encoding in ("utf-8-sig", "utf-8", "latin-1"):
+    """Try UTF-8-BOM, then cp1252 (Windows Western European), then latin-1."""
+    for encoding in ("utf-8-sig", "cp1252", "latin-1"):
         try:
             text = raw.decode(encoding)
             logger.info("CSV decoded with encoding=%s", encoding)
@@ -82,7 +82,7 @@ async def handle_import(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         logger.debug("Row %d: status=%r date=%r merchant=%r amount=%r", i, status, date_raw, description, betrag_raw)
 
-        if status not in _COMPLETED_STATUSES:
+        if status.upper() not in _COMPLETED_STATUSES:
             logger.info("Row %d skipped: status=%r", i, status)
             skipped += 1
             continue
