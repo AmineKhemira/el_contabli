@@ -9,15 +9,15 @@ _client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
 RECEIPT_PROMPT = """You are a receipt parser. Extract all information from this receipt image.
 Return ONLY valid JSON (no markdown, no backticks) with this exact structure:
 {
-  "merchant": "store name",
+  "store": "store name",
   "date": "YYYY-MM-DD",
   "total": 0.00,
-  "currency": "EUR",
   "items": [
-    {"name": "item name", "quantity": 1, "unit_price": 0.00, "total_price": 0.00}
+    {"name": "item name", "quantity": 1, "price": 0.00, "category": "other"}
   ]
 }
-If a field is unknown use null. Date format must be YYYY-MM-DD."""
+If a field is unknown use null. Date format must be YYYY-MM-DD.
+For each item assign a category from this list: dairy, meat, vegetables, fruit, snacks, drinks, hygiene, cleaning, pharmacy, bakery, frozen, pasta, condiments, other."""
 
 
 def _strip_json(text: str) -> str:

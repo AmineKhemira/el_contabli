@@ -24,27 +24,28 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     receipt = await pocketbase.create_record("receipts", {
-        "merchant": data.get("merchant"),
+        "store": data.get("store"),
         "date": data.get("date"),
         "total": data.get("total"),
-        "currency": data.get("currency") or "EUR",
-        "raw": data,
+        "source": "photo",
+        "store_category": "supermarket",
     })
 
     items = data.get("items") or []
     for item in items:
         await pocketbase.create_record("receipt_items", {
-            "receipt": receipt["id"],
+            "receipt_id": receipt["id"],
             "name": item.get("name"),
             "quantity": item.get("quantity", 1),
-            "unit_price": item.get("unit_price"),
-            "total_price": item.get("total_price"),
+            "price": item.get("price"),
+            "category": item.get("category"),
+            "wasted": False,
         })
 
-    summary = "\n".join(f"  • {i.get('name')} — {i.get('total_price')}" for i in items)
+    summary = "\n".join(f"  • {i.get('name')} — {i.get('price')}" for i in items)
     await msg.reply_text(
-        f"✅ *{data.get('merchant')}* — {data.get('date')}\n"
-        f"Total: *{data.get('total')} {data.get('currency', 'EUR')}*\n\n"
+        f"✅ *{data.get('store')}* — {data.get('date')}\n"
+        f"Total: *{data.get('total')}*\n\n"
         f"{summary}",
         parse_mode="Markdown",
     )
