@@ -1,13 +1,15 @@
 import csv
 import io
-import datetime
 import httpx
 from telegram import Update
 from telegram.ext import ContextTypes
 import pocketbase
 
+# German Revolut CSV columns:
+# Typ, Produkt, Startdatum, Datum des Abschlusses, Beschreibung, Betrag, Gebühr, Währung, Status, Guthaben
+_COMPLETED_STATUSES = {"COMPLETED", "Abgeschlossen"}
 
-# Revolut CSV columns: Type,Product,Started Date,Completed Date,Description,Amount,Fee,Currency,State,Balance
+
 async def handle_import(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = update.message
     if not msg.document or not msg.document.file_name.endswith(".csv"):
@@ -24,16 +26,13 @@ async def handle_import(update: Update, context: ContextTypes.DEFAULT_TYPE):
     imported = 0
     skipped = 0
     for row in reader:
-        if row.get("State") != "COMPLETED":
+        if row.get("Status") not in _COMPLETED_STATUSES:
             skipped += 1
             continue
-        amount = float(row["Amount"])
         await pocketbase.create_record("transactions", {
-            "date": row["Completed Date"][:10],
-            "description": row["Description"],
-            "amount": amount,
-            "currency": row["Currency"],
-            "type": "income" if amount > 0 else "expense",
+            "date": row["Datum des Abschlusses"][:10],
+            "merchant": row["Beschreibung"],
+            "amount": float(row["Betrag"]),
             "source": "revolut_csv",
         })
         imported += 1
